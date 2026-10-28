@@ -2146,9 +2146,10 @@ pub fn exe_path() -> &'static Path {
     EXE.get_or_init(|| std::env::current_exe().unwrap_or_else(|_| PathBuf::from(LAUNCHER_BINARY)))
 }
 
-/// Development builds and `HORIZON_LAUNCHER_NO_SELF_UPDATE` never replace themselves.
+/// Offline-only build: it never replaces itself, or the next start would bring back the official
+/// launcher (which asks for a Microsoft account). Updates are made by building this one again.
 pub fn self_update_allowed() -> bool {
-    !cfg!(debug_assertions) && std::env::var_os("HORIZON_LAUNCHER_NO_SELF_UPDATE").is_none()
+    false
 }
 
 /// The version in `horizon-launcher --version`'s output (`horizon-launcher 0.1.5`).
