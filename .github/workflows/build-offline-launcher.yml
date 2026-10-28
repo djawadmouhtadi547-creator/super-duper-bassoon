@@ -1,0 +1,42 @@
+name: build offline launcher
+
+# Builds the launcher for Windows and keeps the .exe as a download on the run's page
+# (Actions -> this run -> Artifacts). No tests, no signing, no release: just the program.
+on:
+  push:
+    paths:
+      - "launcher/**"
+      - "crates/**"
+      - ".github/workflows/build-offline-launcher.yml"
+  workflow_dispatch:
+
+concurrency:
+  group: build-offline-launcher
+  cancel-in-progress: true
+
+jobs:
+  windows:
+    runs-on: windows-latest
+    timeout-minutes: 60
+    env:
+      # The C runtime linked in, so the .exe runs without the Visual C++ redistributable.
+      RUSTFLAGS: -C target-feature=+crt-static
+    defaults:
+      run:
+        working-directory: launcher
+        shell: bash
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: launcher
+          shared-key: launcher-offline-windows
+      - run: cargo build --release --locked
+      - uses: actions/upload-artifact@v4
+        with:
+          name: horizon-launcher-windows
+          path: launcher/target/release/horizon-launcher.exe
+          if-no-files-found: error
